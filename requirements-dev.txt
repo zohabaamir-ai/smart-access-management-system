@@ -1,0 +1,8 @@
+# Development / CI-only tooling (Phase 0 test & tooling baseline).
+# Runtime dependencies live in requirements.txt.
+-r requirements.txt
+
+pytest==9.1.1
+httpx==0.28.1
+alembic==1.19.1
+ruff==0.16.5

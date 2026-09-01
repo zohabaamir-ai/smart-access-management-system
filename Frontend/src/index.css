@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+/* Tailwind CSS v4 directive; ignored by generic CSS linters. */
+/* stylelint-disable-next-line at-rule-no-unknown */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* =============================================================
+   DESIGN TOKENS  (Phase 1 — Product Design Overhaul)
+
+   Restrained operational visual language:
+   - neutral foundation .......... slate (Tailwind default ramp)
+   - one primary accent .......... blue-600  (see Button primary)
+   - recognition-specific accent . cyan / "scan" (below)
+   - semantic status ............. emerald / amber / red / slate
+                                   (StatusDot component)
+
+   Only the recognition accent is registered as a theme color so
+   it generates `*-scan` utilities. Everything else uses the
+   existing Tailwind palette so the not-yet-redesigned pages are
+   untouched.
+============================================================= */
+
+@theme {
+  --color-scan: #06b6d4;          /* cyan-500  — the recognition motif */
+  --color-scan-strong: #0891b2;   /* cyan-600 */
+  --color-scan-soft: #cffafe;     /* cyan-100 */
+
+  --font-mono:
+    "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code",
+    "Roboto Mono", "Consolas", monospace;
+}
+
+/* -------------------------------------------------------------
+   BASE
+------------------------------------------------------------- */
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+html {
+  background-color: #f1f5f9; /* slate-100 */
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+html.dark {
+  background-color: #020617; /* slate-950 */
+}
+
+body {
+  background-color: #f1f5f9;
+}
+
+html.dark body {
+  background-color: #020617;
+}
+
+/* -------------------------------------------------------------
+   UTILITIES
+------------------------------------------------------------- */
+
+/* Tabular numerals — every metric, count, timestamp, distance. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Level-1 elevation: things that float above the page
+   (menus, popovers, drawers, dialogs, toasts). Static
+   in-page panels stay border-only. */
+.elevation-1 {
+  box-shadow:
+    0 1px 2px rgb(2 6 23 / 0.04),
+    0 8px 24px rgb(2 6 23 / 0.08);
+}
+
+.dark .elevation-1 {
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.04),
+    0 8px 28px rgb(0 0 0 / 0.5);
+}
+
+/* -------------------------------------------------------------
+   RECOGNITION MOTION  (used only in Open Camera + kiosk)
+------------------------------------------------------------- */
+
+@keyframes scan-sweep {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translateY(1100%); opacity: 0; }
+}
+
+.scan-sweep {
+  animation: scan-sweep 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background-image: linear-gradient(
+    90deg,
+    rgb(148 163 184 / 0.12) 0px,
+    rgb(148 163 184 / 0.22) 200px,
+    rgb(148 163 184 / 0.12) 400px
+  );
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.4s linear infinite;
+}
+
+@keyframes soft-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+.soft-pulse {
+  animation: soft-pulse 1.6s ease-in-out infinite;
+}
+
+/* -------------------------------------------------------------
+   REDUCE MOTION  (respected everywhere)
+------------------------------------------------------------- */
+
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0ms !important;
+}
+
+html.reduce-motion .scan-sweep,
+html.reduce-motion .skeleton,
+html.reduce-motion .soft-pulse {
+  animation: none !important;
+}
+
+html.reduce-motion .skeleton {
+  background: rgb(148 163 184 / 0.18);
+}

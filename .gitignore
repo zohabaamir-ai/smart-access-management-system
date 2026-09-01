@@ -1,0 +1,32 @@
+# --- Python ---
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# --- tooling caches ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- environment / secrets ---
+.env
+.env.*
+!.env.example
+
+# --- local data ---
+*.db
+app/uploads/
+
+# --- node / frontend (Frontend/ has its own .gitignore too) ---
+node_modules/
+
+# --- logs ---
+*.log
+
+# --- editor / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,42 @@
+# The image is backend-only (uvicorn main:app). Keep the build context
+# small: no local virtualenv, no node_modules, no dev uploads, no VCS,
+# no secrets, no test suite.
+
+# --- version control / project meta ---
+.git/
+.gitignore
+.dockerignore
+*.md
+LICENSE
+
+# --- python: local env + caches ---
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+pyproject.toml
+requirements-dev.txt
+
+# --- secrets / environment (image gets real env vars at runtime) ---
+.env
+.env.*
+
+# --- frontend: built and hosted separately ---
+Frontend/
+
+# --- tests: not needed at runtime ---
+tests/
+
+# --- dev-only runtime data (production mounts a volume at app/uploads/) ---
+app/uploads/
+
+# --- editor / OS / logs ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,35 @@
+# Phase 0 tooling baseline. Ruff runs in REPORT-ONLY mode: no source
+# was modified to satisfy it, and no autofix is configured. The intent
+# is to establish a baseline count only.
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = [
+    "venv",
+    "Frontend",
+    "alembic/versions",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+# Conservative default rule set; report-only.
+select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# SQLAlchemy 2.0 relationship annotations use string forward references
+# (Mapped["Person"], Mapped[list["RecognitionEvent"]], ...) whose target
+# classes are resolved by the declarative mapper registry at
+# configuration time, NOT by Python lexical scope. Pyflakes/Ruff report
+# these as F821 undefined-name; they are false positives (verified: the
+# app imports, create_all + alembic upgrade head succeed, and the
+# relationships are exercised by the characterization suite).
+"app/db/db_models/*.py" = ["F821"]
+
+[tool.pytest.ini_options]
+# Characterization / regression suite. Isolated from the developer DB
+# (see tests/conftest.py — it points DATABASE_URL at a dedicated
+# *_test database and refuses to run otherwise).
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q -ra"
