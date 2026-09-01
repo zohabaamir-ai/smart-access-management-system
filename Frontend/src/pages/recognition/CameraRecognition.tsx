@@ -150,7 +150,10 @@ function CameraRecognition() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 lg:h-screen lg:overflow-hidden dark:bg-slate-950 dark:text-white">
-      <RecognitionHeader camera={camera} />
+      <RecognitionHeader
+        camera={camera}
+        auto={auto}
+      />
 
       {/* Below `lg` the camera + the identity/instructions panel
           stack in one column and can exceed the viewport height —
