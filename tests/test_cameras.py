@@ -47,7 +47,8 @@ def test_create_camera(client, db):
     assert body["slug"] == "main-gate"
     assert body["location"] == "North"
     assert body["is_active"] is True
-    assert body["status"] == "online"
+    # enabled but no public recognition session has run yet
+    assert body["status"] == "offline"
     # the removed device-pairing secret is not part of the contract
     assert "terminal_key" not in body
 
@@ -84,9 +85,11 @@ def test_list_cameras_shape(client, db):
     rows = client.get("/cameras", headers=headers).json()
     assert len(rows) == 1
     assert set(rows[0]) == _CAMERA_RESPONSE_KEYS
-    assert rows[0]["status"] == "online"
+    # no public recognition session -> offline (not a stored column)
+    assert rows[0]["status"] == "offline"
     assert "terminal_key" not in rows[0]
     assert "last_seen" not in rows[0]
+    assert "last_seen_at" not in rows[0]
     assert "camera_status" not in rows[0]
 
 
@@ -209,7 +212,8 @@ def test_disable_camera_reports_disabled_status(client, db):
         json={"is_active": True},
     ).json()
     assert re_enabled["is_active"] is True
-    assert re_enabled["status"] == "online"
+    # re-enabling does not start a public session
+    assert re_enabled["status"] == "offline"
 
 
 def test_update_camera_forbidden_for_operator(client, db):

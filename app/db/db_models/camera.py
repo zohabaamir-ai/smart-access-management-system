@@ -60,6 +60,19 @@ class Camera(Base):
         nullable=False,
     )
 
+    # Last time the camera's PUBLIC recognition station
+    # (/recognition/camera/:slug) sent a session heartbeat or a
+    # recognition frame. Backend-authoritative cross-device ONLINE
+    # signal: the camera is ONLINE while this is fresh. NULL until a
+    # public session has ever run. The management camera preview does
+    # NOT touch this column.
+    last_seen_at: Mapped[
+        datetime | None
+    ] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
     decommissioned_at: Mapped[
         datetime | None
     ] = mapped_column(

@@ -9,18 +9,17 @@ import type { Camera } from './types'
      DISABLED  administratively disabled (is_active = false).
                Backend-owned, authoritative, persistent.
 
-     ONLINE    the camera's PUBLIC recognition URL
-               (/recognition/camera/:slug) currently has a live
-               recognition session — a fresh heartbeat in this
-               browser's localStorage. Opening the management
-               camera preview (/cameras/:id/live) does NOT make
-               a camera ONLINE.
+     ONLINE    the camera's PUBLIC recognition station
+               (/recognition/camera/:slug) has a fresh session
+               heartbeat. The BACKEND is authoritative (works
+               across devices/browsers — camera.status === 'online'
+               when cameras.last_seen_at is within the TTL); a
+               same-browser localStorage heartbeat is kept only as
+               an immediate fallback. Opening the management camera
+               preview (/cameras/:id/live) does NOT make a camera
+               ONLINE.
 
-     OFFLINE   enabled, but no active public recognition session.
-
-   This is a per-browser signal (see cameraSessions.ts). True
-   cross-device presence needs backend support — documented as
-   BACKEND RECOMMENDATION — CAMERA RECOGNITION SESSION PRESENCE.
+     OFFLINE   enabled, but no fresh public recognition session.
 ============================================================= */
 
 export type CameraSessionStatus =
@@ -29,12 +28,21 @@ export type CameraSessionStatus =
   | 'disabled'
 
 export function getCameraSessionStatus(
-  camera: Pick<Camera, 'is_active' | 'slug'>,
+  camera: Pick<
+    Camera,
+    'is_active' | 'slug' | 'status'
+  >,
   activeSessionSlugs: Set<string>,
 ): CameraSessionStatus {
   if (!camera.is_active) {
     return 'disabled'
   }
+  // Backend session presence is authoritative and cross-device.
+  if (camera.status === 'online') {
+    return 'online'
+  }
+  // Same-browser fallback for zero-latency feedback while the
+  // backend poll catches up.
   if (activeSessionSlugs.has(camera.slug)) {
     return 'online'
   }

@@ -186,6 +186,30 @@ class CameraRepository:
         return camera
 
     # =========================================================
+    # RECOGNITION-SESSION PRESENCE
+    # =========================================================
+
+    def touch_last_seen(
+        self,
+        camera: Camera,
+    ) -> Camera:
+        """Stamp ``last_seen_at`` = now (UTC). Called only from the
+        public recognition-station paths (slug heartbeat / slug
+        recognition frame)."""
+
+        camera.last_seen_at = datetime.now(
+            timezone.utc
+        )
+
+        self.db.commit()
+
+        self.db.refresh(
+            camera
+        )
+
+        return camera
+
+    # =========================================================
     # DECOMMISSION
     # =========================================================
 

@@ -259,7 +259,10 @@ def test_migration_drops_and_restores_notifications_table():
         command.upgrade(cfg, "head")
         assert _has_table("notifications") is False
 
-        command.downgrade(cfg, "-1")
+        # Step back to just before drop_notifications (e7c3a1f5d9b8).
+        # Named explicitly rather than "-1" so later migrations added
+        # on top of head do not shift the target.
+        command.downgrade(cfg, "d5b2e8c3f9a1")
         assert _has_table("notifications") is True
         assert _columns("notifications") == {
             "id",

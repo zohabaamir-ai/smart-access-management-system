@@ -9,6 +9,7 @@ import type { RefObject } from 'react'
 
 import {
   recognizeAtCamera,
+  sendCameraHeartbeat,
   RecognitionError,
 } from '../../services/recognitionService'
 import {
@@ -57,11 +58,16 @@ import type {
 
    Session presence:
      While the camera stream is live, this hook heartbeats the
-     camera's public session (localStorage), which is what makes
-     the camera ONLINE in the management app.
+     camera's public session to the BACKEND (authoritative,
+     cross-device ONLINE) and to localStorage (same-browser
+     fallback). Both stop when the page/stream goes away.
 ============================================================= */
 
 export const RECOGNITION_INTERVAL_MS = 2500
+
+// Backend camera-session TTL is 20s (CAMERA_SESSION_TTL_SECONDS);
+// beat comfortably inside it.
+const BACKEND_HEARTBEAT_MS = 8000
 
 const HOLD_MS: Record<string, number> = {
   no_face: 700,
@@ -139,11 +145,29 @@ export function usePublicRecognition({
       )
   }, [slug])
 
-  // heartbeat the public session while the stream is live
+  // heartbeat the public session while the stream is live — to the
+  // backend (cross-device ONLINE) and to localStorage (same-browser
+  // fallback). Both stop when the page / stream goes away.
   useEffect(() => {
     if (!ready) return
-    const stop = startRecognitionSession(slug)
-    return stop
+
+    const stopLocal = startRecognitionSession(slug)
+
+    const beat = () => {
+      void sendCameraHeartbeat(slug).catch(() => {
+        /* best-effort — the interval retries */
+      })
+    }
+    beat()
+    const id = window.setInterval(
+      beat,
+      BACKEND_HEARTBEAT_MS,
+    )
+
+    return () => {
+      window.clearInterval(id)
+      stopLocal()
+    }
   }, [ready, slug])
 
   const setPhase = useCallback(

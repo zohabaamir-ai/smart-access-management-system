@@ -3,9 +3,9 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-# V1 user-facing Camera status.
-#   online   - active and available
-#   offline  - active but expected to be unavailable (no B1 writer yet)
+# V1 user-facing Camera status (derived — see camera_routes._to_response).
+#   online   - fresh public recognition-session heartbeat (last_seen_at within TTL)
+#   offline  - enabled, but no fresh public recognition session
 #   disabled - intentionally disabled by authorized management (is_active=False)
 CameraStatus = Literal["online", "offline", "disabled"]
 

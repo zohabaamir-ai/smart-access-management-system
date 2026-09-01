@@ -11,6 +11,7 @@ from app.core.permissions import Permission
 
 from app.services.camera_service import (
     CameraService,
+    derive_camera_status,
 )
 
 from app.schemas.camera_schemas import (
@@ -35,10 +36,12 @@ router = APIRouter(
 # =============================================================
 # RESPONSE MAPPING
 #
-# V1 status is derived, not stored: a Camera is "disabled" when
-# management has toggled is_active off, otherwise "online".
-# "offline" is part of the response contract for a future
-# liveness signal but nothing in B1 sets it.
+# status is derived, not a stored column:
+#   disabled  is_active=False (authoritative)
+#   online    fresh public recognition-session heartbeat
+#             (cameras.last_seen_at within the TTL)
+#   offline   enabled, no fresh public session
+# See app/services/camera_service.py :: derive_camera_status.
 # =============================================================
 
 def _to_response(camera: Camera) -> CameraResponse:
@@ -48,11 +51,7 @@ def _to_response(camera: Camera) -> CameraResponse:
         slug=camera.slug,
         location=camera.location,
         is_active=camera.is_active,
-        status=(
-            "online"
-            if camera.is_active
-            else "disabled"
-        ),
+        status=derive_camera_status(camera),
         created_at=camera.created_at,
     )
 

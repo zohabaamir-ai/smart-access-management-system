@@ -20,13 +20,16 @@ import { readActiveSessionSlugs } from './cameraSessions'
 /* =============================================================
    CAMERAS PROVIDER
 
-   - loads GET /cameras once and revalidates slowly while visible
-   - tracks which cameras have a live PUBLIC recognition session
-     (localStorage heartbeats), refreshed on a short interval and
-     on cross-tab storage events
+   - loads GET /cameras and revalidates on a short interval while
+     visible. The camera `status` in that response is the
+     authoritative cross-device ONLINE/OFFLINE signal (backend
+     recognition-session heartbeat), so the poll doubles as the
+     presence refresh.
+   - also tracks same-browser localStorage heartbeats as an
+     immediate fallback (cross-tab storage events + a short poll).
 ============================================================= */
 
-const REVALIDATE_MS = 60_000
+const REVALIDATE_MS = 15_000
 const SESSION_POLL_MS = 4_000
 
 function CamerasProvider({

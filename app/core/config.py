@@ -53,3 +53,12 @@ DUPLICATE_FACE_THRESHOLD = 0.75
 # Maximum embedding distance for a live face to be accepted as a match
 # during recognition. Value unchanged.
 RECOGNITION_THRESHOLD = 1.0
+
+
+# --- camera recognition-session presence -----------------------------------
+
+# A camera is ONLINE while its public recognition station's last heartbeat
+# (or recognition frame) is newer than this. The station beats well inside
+# the window; this leaves room for a couple of missed beats + network lag
+# before the camera drops to OFFLINE.
+CAMERA_SESSION_TTL_SECONDS = 20

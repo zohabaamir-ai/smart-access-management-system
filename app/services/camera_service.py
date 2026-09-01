@@ -1,9 +1,44 @@
 import re
+from datetime import datetime, timedelta, timezone
 
+from app.core.config import CAMERA_SESSION_TTL_SECONDS
 from app.db.db_models.camera import Camera
 from app.repositories.camera_repository import (
     CameraRepository,
 )
+
+
+def derive_camera_status(camera: Camera) -> str:
+    """User-facing camera status.
+
+    disabled  administratively disabled (is_active=False) — authoritative.
+    online    the public recognition station sent a fresh heartbeat /
+              recognition frame (last_seen_at within CAMERA_SESSION_TTL_SECONDS).
+    offline   enabled, but no fresh public recognition session.
+
+    Opening the management camera preview never sets last_seen_at, so a
+    preview can never make a camera ONLINE.
+    """
+
+    if not camera.is_active:
+        return "disabled"
+
+    last_seen = camera.last_seen_at
+
+    if last_seen is not None:
+        if last_seen.tzinfo is None:
+            last_seen = last_seen.replace(
+                tzinfo=timezone.utc
+            )
+        fresh_after = datetime.now(
+            timezone.utc
+        ) - timedelta(
+            seconds=CAMERA_SESSION_TTL_SECONDS
+        )
+        if last_seen >= fresh_after:
+            return "online"
+
+    return "offline"
 
 
 class CameraService:
@@ -158,6 +193,31 @@ class CameraService:
         )
 
         return camera
+
+    def mark_session_seen(
+        self,
+        slug: str,
+    ) -> Camera:
+        """Record a public recognition-station heartbeat for the camera
+        with this slug. Resolves through the same usability gate as
+        recognition (rejects unknown / decommissioned / disabled), then
+        stamps ``last_seen_at``."""
+
+        camera = self.get_camera_by_slug(slug=slug)
+
+        return self.touch_session(camera)
+
+    def touch_session(
+        self,
+        camera: Camera,
+    ) -> Camera:
+        """Stamp ``last_seen_at`` on an already-resolved public-station
+        camera (used by the slug recognition frame path)."""
+
+        return (
+            self.camera_repository
+            .touch_last_seen(camera)
+        )
 
     def get_camera_for_recognition(
         self,

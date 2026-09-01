@@ -21,11 +21,11 @@ import { request } from './api'
    (it belongs to the dedicated recognition flow, F7).
 ============================================================= */
 
-// V1 user-facing status. Derived by the backend from is_active:
-//   is_active=true  -> "online"
-//   is_active=false -> "disabled"
-// "offline" is reserved in the contract for a future liveness
-// signal; nothing in V1 sets it.
+// V1 user-facing status, derived by the backend:
+//   disabled - is_active=false (authoritative)
+//   online   - a fresh public recognition-session heartbeat
+//              (cameras.last_seen_at within the backend TTL)
+//   offline  - enabled, no fresh public recognition session
 export type CameraStatus =
   | 'online'
   | 'offline'

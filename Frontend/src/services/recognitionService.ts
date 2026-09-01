@@ -141,3 +141,30 @@ export async function recognizeAtCamera(
 
   return response.json() as Promise<RecognitionResponse>
 }
+
+/* =============================================================
+   SESSION HEARTBEAT
+
+   POST /recognition/camera/{slug}/heartbeat — no body, no
+   recognition, no event. Tells the backend this public station
+   is live so the management app (any device) shows the camera
+   ONLINE. Best-effort: a failed beat is swallowed (the loop
+   retries on its interval); a 404 means the camera is gone.
+============================================================= */
+
+export async function sendCameraHeartbeat(
+  slug: string,
+): Promise<void> {
+  const response = await publicFetch(
+    `/recognition/camera/${encodeURIComponent(slug)}/heartbeat`,
+    { method: 'POST' },
+  )
+
+  if (!response.ok) {
+    throw new RecognitionError(
+      response.status,
+      await readDetail(response),
+      'Session heartbeat failed.',
+    )
+  }
+}

@@ -146,6 +146,11 @@ async def recognize_at_camera(
             detail=str(e),
         )
 
+    # A recognizing station is a present station: refresh the
+    # cross-device session heartbeat (the management-by-id path
+    # deliberately does NOT do this).
+    camera_service.touch_session(camera)
+
     image = await decode_image_upload(file)
 
     try:
@@ -159,3 +164,42 @@ async def recognize_at_camera(
             status_code=400,
             detail=str(e),
         )
+
+
+# =============================================================
+# DEDICATED CAMERA URL — SESSION HEARTBEAT
+#
+# Public endpoint. The recognition station calls this on open
+# and on a short interval while its camera stream is live, so
+# the management app (any device) can show the camera ONLINE.
+# It performs no recognition and creates no Recognition Event.
+# Opening the management camera preview does NOT call this.
+# =============================================================
+
+@router.post(
+    "/camera/{slug}/heartbeat",
+)
+async def recognition_session_heartbeat(
+    slug: str,
+    camera_service: CameraService = Depends(
+        get_camera_service
+    ),
+):
+    try:
+        camera = (
+            camera_service
+            .mark_session_seen(
+                slug=slug,
+            )
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e),
+        )
+
+    return {
+        "slug": camera.slug,
+        "status": "online",
+    }
