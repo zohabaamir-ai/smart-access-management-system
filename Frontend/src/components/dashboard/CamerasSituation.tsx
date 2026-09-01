@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Cctv } from 'lucide-react'
 
 import useCameras from '../../context/cameras/useCameras'
+import { getCameraSessionStatus } from '../cameras/cameraStatus'
 
 import Card from '../common/Card'
 import Skeleton from '../common/Skeleton'
@@ -15,13 +16,20 @@ import type { StatusTone } from '../common/StatusDot'
    An operational Online / Offline summary of the camera fleet:
 
      · enabled / total   headline
-     · Online   — enabled cameras whose PUBLIC recognition URL
+     · Online   — enabled cameras whose PUBLIC recognition station
                   currently has a live session
      · Offline  — enabled cameras with no active public session
 
+   Online / Offline is derived through the shared
+   getCameraSessionStatus helper — the same authoritative,
+   backend-first status the Cameras page uses (camera.status from
+   GET /cameras, revalidated by CamerasProvider), with the
+   per-browser localStorage heartbeat only as a same-device
+   fallback. That is what makes the count reflect a session
+   started on another device.
+
    Disabled cameras are an administrative state surfaced through
-   the Dashboard attention banner, not here. No hardware health,
-   no heartbeat — V1 has no such signal.
+   the Dashboard attention banner, not here.
 ============================================================= */
 
 function CamerasSituation() {
@@ -38,8 +46,10 @@ function CamerasSituation() {
   ).length
   const online = cameras.filter(
     (c) =>
-      c.is_active &&
-      activeSessionSlugs.has(c.slug),
+      getCameraSessionStatus(
+        c,
+        activeSessionSlugs,
+      ) === 'online',
   ).length
   const offline = enabled - online
 
