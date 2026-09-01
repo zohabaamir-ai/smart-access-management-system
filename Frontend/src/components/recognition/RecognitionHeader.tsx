@@ -41,7 +41,7 @@ function RecognitionHeader({
               size="sm"
             />
           </span>
-          <span className="hidden shrink-0 sm:block">
+          <span className="hidden shrink-0 whitespace-nowrap sm:flex">
             <SystemLogo
               variant="full"
               size="sm"

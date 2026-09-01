@@ -141,18 +141,18 @@ function AppSidebar({
       >
         {/* brand */}
         <div
-          className={`flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-5 dark:border-slate-800 ${
+          className={`flex h-16 shrink-0 items-center justify-between gap-2 border-b border-slate-200 px-5 dark:border-slate-800 ${
             sidebarCollapsed
-              ? 'lg:justify-center lg:px-2'
+              ? 'lg:justify-center lg:px-0'
               : ''
           }`}
         >
           <span
-            className={
+            className={`shrink-0 ${
               sidebarCollapsed
                 ? 'lg:hidden'
                 : ''
-            }
+            }`}
           >
             <SystemLogo
               variant="full"
@@ -160,7 +160,7 @@ function AppSidebar({
             />
           </span>
           {sidebarCollapsed && (
-            <span className="hidden lg:flex">
+            <span className="hidden shrink-0 lg:flex">
               <SystemLogo
                 variant="mark"
                 size="sm"

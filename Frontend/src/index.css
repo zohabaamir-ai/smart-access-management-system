@@ -41,6 +41,19 @@ body,
   margin: 0;
 }
 
+/* The app shell's sidebar is an off-canvas element parked at
+   translateX(-100%) below `lg`. A fixed, transformed box off the
+   left edge extends the viewport's scrollable region, which makes
+   mobile browsers surface a phantom horizontal scrollbar and zoom
+   out to "fit" on load. Clip the horizontal axis at the document
+   level so the shell always sizes to the real viewport. `clip`
+   (not `hidden`) creates no scroll container, so `position: sticky`
+   and in-page `overflow-x-auto` regions keep working. */
+html,
+body {
+  overflow-x: clip;
+}
+
 html {
   background-color: #f1f5f9; /* slate-100 */
   font-family:

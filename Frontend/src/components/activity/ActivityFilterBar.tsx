@@ -89,7 +89,7 @@ function ActivityFilterBar({
 
   return (
     <div>
-      <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-x-3 gap-y-4 *:min-w-0 sm:grid-cols-2 lg:grid-cols-4">
         <Field label="From" htmlFor="act-from">
           <Input
             id="act-from"

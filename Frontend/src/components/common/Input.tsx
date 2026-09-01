@@ -18,8 +18,12 @@ import { X } from 'lucide-react'
    <Input type="date" invalid />
 ============================================================= */
 
+// `min-w-0` lets the control shrink to its box: native date/time
+// inputs otherwise keep an intrinsic content min-width (spinner
+// text + picker indicator) on mobile WebKit that defeats `w-full`
+// and pushes them past a narrow grid/flex track.
 const BASE =
-  'h-9 w-full rounded-md border bg-white px-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:disabled:bg-slate-800/60'
+  'h-9 w-full min-w-0 rounded-md border bg-white px-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:disabled:bg-slate-800/60'
 
 const OK_TONE =
   'border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 dark:border-slate-700 dark:focus:border-blue-500'
