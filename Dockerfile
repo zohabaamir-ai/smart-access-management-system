@@ -15,6 +15,9 @@ RUN mkdir -p app/uploads/persons app/uploads/profiles
 
 EXPOSE 8000
 
-# Honour the platform-provided PORT (Render sets it); fall back to 8000
-# for local `docker run` / docker-compose.
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Apply DB migrations, then start the server. `&&` short-circuits: if
+# `alembic upgrade head` exits non-zero the container stops and Uvicorn
+# never starts (Render Free has no Pre-Deploy hook, so this is where
+# migrations run). PORT is provided by Render; fall back to 8000 for
+# local `docker run` / docker-compose.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
