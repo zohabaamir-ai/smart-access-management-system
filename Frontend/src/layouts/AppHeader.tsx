@@ -1,4 +1,5 @@
 import {
+  Menu,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react'
@@ -42,7 +43,14 @@ const pageTitles: Record<
 }
 
 
-function Header() {
+type HeaderProps = {
+  /** opens the off-canvas mobile nav (below the `lg` breakpoint) */
+  onOpenMobileNav?: () => void
+}
+
+function Header({
+  onOpenMobileNav,
+}: HeaderProps) {
 
   const navigate = useNavigate()
   const location = useLocation()
@@ -242,10 +250,23 @@ function Header() {
 
       <div className="flex items-center gap-3">
 
+        {/* opens the off-canvas nav — below `lg` only, where the
+            sidebar is not permanently docked */}
+        <button
+          type="button"
+          onClick={onOpenMobileNav}
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 lg:hidden dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+          aria-label="Open navigation"
+          title="Open navigation"
+        >
+          <Menu size={20} />
+        </button>
+
+        {/* collapse/expand the docked rail — desktop only */}
         <button
           type="button"
           onClick={toggleSidebar}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+          className="hidden h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 lg:flex dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
           aria-label={
             sidebarCollapsed
               ? 'Expand sidebar'

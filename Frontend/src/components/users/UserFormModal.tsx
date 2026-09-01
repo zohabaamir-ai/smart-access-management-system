@@ -233,15 +233,19 @@ function UserFormModal({
           </Field>
 
           {isEdit && user ? (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Username">
-                <div className="flex h-9 items-center rounded-md border border-slate-200 bg-slate-50 px-3 font-mono text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
-                  {user.username}
+                <div className="flex h-9 min-w-0 items-center rounded-md border border-slate-200 bg-slate-50 px-3 font-mono text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
+                  <span className="truncate">
+                    {user.username}
+                  </span>
                 </div>
               </Field>
               <Field label="Role">
-                <div className="flex h-9 items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
-                  {roleLabel(user.role)}
+                <div className="flex h-9 min-w-0 items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400">
+                  <span className="truncate">
+                    {roleLabel(user.role)}
+                  </span>
                 </div>
               </Field>
             </div>

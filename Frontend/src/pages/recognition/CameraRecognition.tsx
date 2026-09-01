@@ -149,11 +149,16 @@ function CameraRecognition() {
   /* ---------- running ---------- */
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 lg:h-screen lg:overflow-hidden dark:bg-slate-950 dark:text-white">
       <RecognitionHeader camera={camera} />
 
-      <main className="mx-auto h-[calc(100vh-5rem)] max-w-7xl overflow-hidden px-6 py-5">
-        <div className="grid h-full min-h-0 gap-6 lg:grid-cols-[1.5fr_0.5fr]">
+      {/* Below `lg` the camera + the identity/instructions panel
+          stack in one column and can exceed the viewport height —
+          this page scrolls there instead of clipping the panel.
+          At `lg` and up it is the original fixed, non-scrolling
+          two-column kiosk layout. */}
+      <main className="mx-auto max-w-7xl overflow-y-auto px-4 py-4 sm:px-6 sm:py-5 lg:h-[calc(100vh-5rem)] lg:overflow-hidden">
+        <div className="grid gap-4 sm:gap-6 lg:h-full lg:min-h-0 lg:grid-cols-[1.5fr_0.5fr]">
           <RecognitionPanel
             phase={phase}
             outcome={outcome}

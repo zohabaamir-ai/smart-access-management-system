@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 import {
   Outlet,
   useLocation,
@@ -22,6 +24,21 @@ function DashboardLayout() {
 
   const location = useLocation()
 
+  // Below `lg` the sidebar is an off-canvas overlay (closed by
+  // default) instead of a permanently docked rail — there is no
+  // room for a fixed 256px column on a phone/tablet viewport.
+  // At `lg` and up the layout is exactly the pre-existing desktop
+  // shell, unaffected by this state.
+  const [
+    mobileNavOpen,
+    setMobileNavOpen,
+  ] = useState(false)
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMobileNavOpen(false)
+  }, [location.pathname])
+
   // Full-bleed operational surfaces (Open Camera) fill the
   // content area edge-to-edge and manage their own scrolling.
   const isImmersive =
@@ -41,16 +58,25 @@ function DashboardLayout() {
     <ToastProvider>
       <CamerasProvider>
         <div className="min-h-screen bg-slate-100 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
-          <Sidebar />
+          <Sidebar
+            mobileOpen={mobileNavOpen}
+            onCloseMobile={() =>
+              setMobileNavOpen(false)
+            }
+          />
 
           <main
             className={`min-h-screen transition-[margin] duration-200 ease-in-out ${
               sidebarCollapsed
-                ? 'ml-20'
-                : 'ml-64'
+                ? 'lg:ml-20'
+                : 'lg:ml-64'
             }`}
           >
-            <Header />
+            <Header
+              onOpenMobileNav={() =>
+                setMobileNavOpen(true)
+              }
+            />
 
             <section
               className={`${contentPadding} ${
