@@ -47,12 +47,18 @@ function SystemLogo({
         }}
       >
 
+        {/* Sized by the explicit px width/height attributes only — no
+            CSS percentage sizing. A percentage-sized <svg> fails to
+            resolve inside a display:flex / align-items:stretch wrapper
+            in WebKit, so the viewBox transform is skipped and the
+            overflow:hidden svg shows only the top-left of the artwork
+            (looks like a cropped shield). The wrapper div already
+            reserves the same box. */}
         <svg
           width={currentSize.mark}
           height={currentSize.mark}
           viewBox="0 0 100 100"
           preserveAspectRatio="xMidYMid meet"
-          className="h-full w-full"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >

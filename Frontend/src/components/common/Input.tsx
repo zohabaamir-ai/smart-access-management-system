@@ -60,6 +60,21 @@ function Input({
     String(rest.value ?? '').length > 0 &&
     !rest.disabled
 
+  const nativePicker =
+    rest.type === 'date' ||
+    rest.type === 'time' ||
+    rest.type === 'datetime-local' ||
+    rest.type === 'month' ||
+    rest.type === 'week'
+
+  // Below `sm`, drop the native date/time control chrome: its
+  // intrinsic minimum width otherwise ignores width:100% / max-width
+  // and pushes the field past its filter-card column. Tapping still
+  // opens the native picker; `sm`+ (desktop) keeps the native look.
+  const pickerReset = nativePicker
+    ? ' max-sm:appearance-none max-sm:[-webkit-appearance:none]'
+    : ''
+
   if (icon || showClear) {
     return (
       <div className="relative">
@@ -72,7 +87,7 @@ function Input({
         <input
           className={`${BASE} ${tone} ${
             icon ? 'pl-9' : ''
-          } ${showClear ? 'pr-9' : ''}`}
+          } ${showClear ? 'pr-9' : ''}${pickerReset}`}
           {...rest}
         />
 
@@ -92,7 +107,7 @@ function Input({
 
   return (
     <input
-      className={`${BASE} ${tone}`}
+      className={`${BASE} ${tone}${pickerReset}`}
       {...rest}
     />
   )
