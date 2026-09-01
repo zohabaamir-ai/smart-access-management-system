@@ -25,8 +25,11 @@ import SystemLogo from '../branding/SystemLogo'
 ============================================================= */
 
 // Shared control styling so every auth input matches.
+// `text-base sm:text-sm` — 16px on phones so iOS Safari does not
+// auto-zoom the field on focus; the approved 14px is restored from
+// the `sm` breakpoint up (unchanged desktop appearance).
 export const AUTH_INPUT_CLASS =
-  'h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:disabled:bg-slate-800/60'
+  'h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-base text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 sm:text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:disabled:bg-slate-800/60'
 
 const HIGHLIGHTS = [
   {

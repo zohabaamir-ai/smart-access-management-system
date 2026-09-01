@@ -59,9 +59,6 @@ function PersonsPage() {
     fetchPersons,
   } = usePersonDirectory()
 
-  const [photoVersions, setPhotoVersions] =
-    useState<Record<number, number>>({})
-
   const [inspecting, setInspecting] =
     useState<Person | null>(null)
 
@@ -79,18 +76,17 @@ function PersonsPage() {
     useState('')
 
   function getPhotoUrl(personId: number) {
+    // The cache-buster is the person's current server-side photo
+    // file (photo_path), read from the freshly-fetched list — so it
+    // survives reloads/remounts and only changes when the photo does.
+    const person = persons.find(
+      (p) => p.id === personId,
+    )
+
     return getPersonPhotoUrl(
       personId,
-      photoVersions[personId] ?? 0,
+      person?.photo_path ?? null,
     )
-  }
-
-  function bumpPhoto(personId: number) {
-    setPhotoVersions((current) => ({
-      ...current,
-      [personId]:
-        (current[personId] ?? 0) + 1,
-    }))
   }
 
   /* ---------- add / edit ---------- */
@@ -112,15 +108,13 @@ function PersonsPage() {
 
   async function handleFormSaved({
     message,
-    photoChanged,
   }: {
     message: string
     photoChanged: boolean
   }) {
     toast.show({ message })
-    if (photoChanged && selectedPerson) {
-      bumpPhoto(selectedPerson.id)
-    }
+    // The photo URL is keyed off person.photo_path, so refetching
+    // the list is all that's needed for a changed photo to show.
     await fetchPersons()
     closeForm()
   }

@@ -92,8 +92,19 @@ export function updatePerson(
 
 export function getPersonPhotoUrl(
   personId: number,
-  version: number,
+  photoPath: string | null,
 ): string {
+  // Cache-buster derived from the server-side photo file, not from
+  // ephemeral client state: `person.photo_path` is a fresh UUID
+  // filename on every photo upload, so this URL changes exactly
+  // when the stored image changes and never resets on reload.
+  const version = photoPath
+    ? encodeURIComponent(
+        photoPath.split(/[\\/]/).pop() ||
+          photoPath,
+      )
+    : '0'
+
   return `${API_BASE_URL}/persons/${personId}/photo?v=${version}`
 }
 

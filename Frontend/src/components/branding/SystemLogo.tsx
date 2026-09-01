@@ -48,7 +48,10 @@ function SystemLogo({
       >
 
         <svg
+          width={currentSize.mark}
+          height={currentSize.mark}
           viewBox="0 0 100 100"
+          preserveAspectRatio="xMidYMid meet"
           className="h-full w-full"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
