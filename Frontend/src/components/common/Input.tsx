@@ -105,6 +105,35 @@ function Input({
     )
   }
 
+  if (nativePicker) {
+    // `appearance-none` (mobile) hides the browser's own
+    // "mm/dd/yyyy" affordance, so an empty native date field looks
+    // blank on a phone. Re-supply a visible hint below `sm` only,
+    // shown while the field has no value. It's decorative
+    // (aria-hidden) and pointer-through, so tapping still opens the
+    // native picker. Desktop (`sm`+) keeps the browser's own text.
+    const hasValue =
+      String(rest.value ?? '').length > 0
+
+    return (
+      <span className="relative block">
+        <input
+          className={`${BASE} ${tone}${pickerReset}`}
+          {...rest}
+        />
+
+        {rest.type === 'date' && !hasValue && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-base text-slate-400 sm:hidden dark:text-slate-500"
+          >
+            mm/dd/yyyy
+          </span>
+        )}
+      </span>
+    )
+  }
+
   return (
     <input
       className={`${BASE} ${tone}${pickerReset}`}

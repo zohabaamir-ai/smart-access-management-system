@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 interface SystemLogoProps {
   variant?: 'full' | 'mark'
   size?: 'sm' | 'md' | 'lg'
@@ -35,6 +37,20 @@ function SystemLogo({
   const currentSize =
     sizes[size]
 
+  // Unique per instance. Several SystemLogos are in the DOM at once
+  // (the sidebar keeps both the full logo and the collapsed mark
+  // mounted, one of them display:none; likewise the recognition
+  // header and the login screen). With a shared gradient id, the
+  // VISIBLE shield's `fill="url(#id)"` resolves to the first match
+  // in document order — a <linearGradient> that may live inside a
+  // display:none subtree, which WebKit refuses to use as a paint
+  // server, so the shield renders empty. A per-instance id keeps the
+  // reference inside the same <svg> as the path it paints.
+  const gradientId = `syslogo-shield-${useId().replace(
+    /[^a-z0-9]/gi,
+    '',
+  )}`
+
 
   if (variant === 'mark') {
 
@@ -47,13 +63,8 @@ function SystemLogo({
         }}
       >
 
-        {/* Sized by the explicit px width/height attributes only — no
-            CSS percentage sizing. A percentage-sized <svg> fails to
-            resolve inside a display:flex / align-items:stretch wrapper
-            in WebKit, so the viewBox transform is skipped and the
-            overflow:hidden svg shows only the top-left of the artwork
-            (looks like a cropped shield). The wrapper div already
-            reserves the same box. */}
+        {/* Sized by explicit px width/height attributes; the wrapper
+            div already reserves the same box. */}
         <svg
           width={currentSize.mark}
           height={currentSize.mark}
@@ -66,7 +77,7 @@ function SystemLogo({
           <defs>
 
             <linearGradient
-              id="shieldGradient"
+              id={gradientId}
               x1="18"
               y1="10"
               x2="82"
@@ -95,7 +106,7 @@ function SystemLogo({
 
           <path
             d="M50 5L88 19V47C88 69 73 87 50 96C27 87 12 69 12 47V19L50 5Z"
-            fill="url(#shieldGradient)"
+            fill={`url(#${gradientId}) #2563EB`}
           />
 
 
