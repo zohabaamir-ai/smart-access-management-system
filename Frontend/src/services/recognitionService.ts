@@ -26,6 +26,9 @@ export interface RecognitionCamera {
   location: string
   is_active: boolean
   status: 'online' | 'offline' | 'disabled'
+  // camera-level recognition mode (Auto vs Manual), authoritative
+  // and shared across every device that opens this camera
+  auto_recognition: boolean
   created_at: string
 }
 

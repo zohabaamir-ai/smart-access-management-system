@@ -52,6 +52,7 @@ def _to_response(camera: Camera) -> CameraResponse:
         location=camera.location,
         is_active=camera.is_active,
         status=derive_camera_status(camera),
+        auto_recognition=camera.auto_recognition,
         created_at=camera.created_at,
     )
 
@@ -227,6 +228,7 @@ async def update_camera(
                 name=request.name,
                 location=request.location,
                 is_active=request.is_active,
+                auto_recognition=request.auto_recognition,
             )
         )
 

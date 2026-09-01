@@ -1,7 +1,4 @@
-import {
-  useState,
-  type ReactNode,
-} from 'react'
+import { type ReactNode } from 'react'
 
 import {
   Copy,
@@ -21,10 +18,6 @@ import { Menu, MenuItem } from '../common/Menu'
 
 import useCameraActivity from './useCameraActivity'
 import { formatRelativeTime } from '../../utils/time'
-import {
-  getAutoRecognition,
-  setAutoRecognition,
-} from '../../context/cameras/cameraSessions'
 
 import {
   formatDate,
@@ -53,6 +46,10 @@ type Props = {
   onOpen: (camera: Camera) => void
   onEdit: (camera: Camera) => void
   onToggleActive: (camera: Camera) => void
+  onToggleAuto: (
+    camera: Camera,
+    next: boolean,
+  ) => void
   onDecommission: (camera: Camera) => void
   onCopyUrl: (camera: Camera) => void
 }
@@ -65,23 +62,18 @@ function CameraDetailDrawer({
   onOpen,
   onEdit,
   onToggleActive,
+  onToggleAuto,
   onDecommission,
   onCopyUrl,
 }: Props) {
   const { events, loaded } =
     useCameraActivity(camera?.id ?? 0)
 
-  const [auto, setAuto] = useState<boolean>(
-    () =>
-      camera
-        ? getAutoRecognition(camera.slug)
-        : false,
-  )
-
   if (!camera) {
     return null
   }
 
+  const auto = camera.auto_recognition
   const status = getCameraSessionStatus(
     camera,
     activeSlugs,
@@ -91,8 +83,7 @@ function CameraDetailDrawer({
 
   function handleAutoChange(next: boolean) {
     if (!camera) return
-    setAuto(next)
-    setAutoRecognition(camera.slug, next)
+    onToggleAuto(camera, next)
   }
 
   return (
@@ -235,10 +226,10 @@ function CameraDetailDrawer({
                   Auto recognition
                 </span>
                 <span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-slate-400">
-                  When on, the public camera URL
-                  scans continuously (~2.5s).
-                  When off, it waits for a
-                  manual Recognise.
+                  When on, the public station
+                  recognises on its own as soon
+                  as a face appears. When off, it
+                  waits for a manual Recognise.
                 </span>
               </span>
               <Toggle
@@ -248,9 +239,9 @@ function CameraDetailDrawer({
               />
             </label>
             <p className="mt-3 border-t border-slate-100 pt-2.5 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-500">
-              Saved on this device. The public
-              camera page reads it when it
-              opens.
+              Camera-level setting. Every device
+              that opens this camera uses the same
+              mode.
             </p>
           </div>
         </div>

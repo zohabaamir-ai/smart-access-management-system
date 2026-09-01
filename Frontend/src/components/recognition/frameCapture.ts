@@ -64,15 +64,16 @@ export async function captureJpegFrame(
 /* =============================================================
    FRAME SIGNATURE  (coarse scene fingerprint)
 
-   A 32x24 greyscale downscale of the current video frame. Used
-   ONLY by Open Camera to notice, after a successful match, when
-   the scene has changed enough that the recognised person has
-   most likely left the frame — so the same stationary person
-   does not keep generating Recognition Events.
+   A 32x24 greyscale downscale of the current video frame. The
+   public recognition station compares it against a quiet
+   "baseline" to decide, cheaply and locally, when the scene has
+   changed enough to be worth a real recognition request — a
+   lightweight watch, not a poll — and, after a match, when the
+   recognised person has most likely left the frame.
 
-   This is a pixel-delta heuristic, NOT face detection. It is
-   deliberately never used to decide *whether to recognise* —
-   only to decide when to resume scanning after a match.
+   This is a pixel-delta heuristic, NOT face detection or
+   recognition: it only gates *when* to run the existing
+   recognition call, never the result.
 ============================================================= */
 
 const SIG_W = 32

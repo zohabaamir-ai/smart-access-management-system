@@ -25,7 +25,16 @@ import type {
    camera that exists but is disabled / decommissioned. That
    distinction is surfaced as `unavailableKind`; anything else
    is a generic `error`.
+
+   After the first resolve it re-fetches quietly on an interval
+   so a management-side change to `auto_recognition` reaches an
+   already-open station within ~REFRESH_MS. A failed re-fetch is
+   ignored — the running page is not disturbed (a mid-session
+   disable is still handled by the recognition POST returning
+   404).
 ============================================================= */
+
+const REFRESH_MS = 20_000
 
 export function useRecognitionSession(
   slug: string,
@@ -91,6 +100,25 @@ export function useRecognitionSession(
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
   }, [load])
+
+  // quiet re-resolve so a management-side auto_recognition change
+  // reaches an already-open station; failures are swallowed
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (
+        document.visibilityState !== 'visible'
+      ) {
+        return
+      }
+      getRecognitionCamera(slug)
+        .then(setCamera)
+        .catch(() => {
+          /* keep the current state — do not disturb the page */
+        })
+    }, REFRESH_MS)
+
+    return () => window.clearInterval(id)
+  }, [slug])
 
   return {
     camera,

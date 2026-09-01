@@ -189,6 +189,46 @@ function CamerasPage() {
     }
   }
 
+  /* ---------- auto recognition mode ---------- */
+
+  async function handleToggleAuto(
+    camera: Camera,
+    next: boolean,
+  ) {
+    try {
+      const updated = await updateCamera(
+        camera.id,
+        { auto_recognition: next },
+      )
+      setCameras((current) =>
+        current.map((item) =>
+          item.id === updated.id
+            ? updated
+            : item,
+        ),
+      )
+      setInspecting((current) =>
+        current?.id === updated.id
+          ? updated
+          : current,
+      )
+      toast.show({
+        message: updated.auto_recognition
+          ? `${updated.name} — Auto recognition on`
+          : `${updated.name} — Manual recognition`,
+      })
+    } catch (caught) {
+      if (isAuthExpired(caught)) return
+      toast.show({
+        message: readError(
+          caught,
+          'Unable to update camera.',
+        ),
+        tone: 'fault',
+      })
+    }
+  }
+
   /* ---------- decommission ---------- */
 
   function openDecommission(camera: Camera) {
@@ -332,6 +372,7 @@ function CamerasPage() {
         onOpen={handleOpen}
         onEdit={openEdit}
         onToggleActive={handleToggleActive}
+        onToggleAuto={handleToggleAuto}
         onDecommission={openDecommission}
         onCopyUrl={handleCopyUrl}
       />

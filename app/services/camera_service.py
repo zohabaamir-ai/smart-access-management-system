@@ -305,6 +305,7 @@ class CameraService:
         name: str | None = None,
         location: str | None = None,
         is_active: bool | None = None,
+        auto_recognition: bool | None = None,
     ) -> Camera:
 
         camera = (
@@ -331,6 +332,7 @@ class CameraService:
             name is None
             and location is None
             and is_active is None
+            and auto_recognition is None
         ):
             raise ValueError(
                 "No camera fields were provided."
@@ -382,6 +384,7 @@ class CameraService:
                 name=name,
                 location=location,
                 is_active=is_active,
+                auto_recognition=auto_recognition,
             )
         )
 

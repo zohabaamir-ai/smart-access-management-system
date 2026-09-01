@@ -47,12 +47,9 @@ function toneFor(
   if (outcome.kind === 'matched') return 'ok'
   if (outcome.kind === 'no_match') return 'fault'
   if (outcome.kind === 'multi_face') return 'warn'
-  if (
-    phase === 'checking' ||
-    phase === 'scanning'
-  ) {
-    return 'scan'
-  }
+  // cyan only while a recognition is actually running; the
+  // waiting state stays neutral so it reads as calm
+  if (phase === 'checking') return 'scan'
   return 'idle' as const
 }
 
@@ -61,16 +58,16 @@ function ribbonFor(
   outcome: RecognitionOutcome,
   auto: boolean,
 ) {
-  if (phase === 'checking') return 'Reading…'
+  if (phase === 'checking') return 'Recognizing…'
   if (outcome.kind === 'multi_face') {
     return 'Please make sure only one person is in front of the camera'
   }
   if (outcome.kind === 'no_face') {
-    return 'Looking for a face…'
+    return 'No face detected'
   }
   if (phase === 'scanning') {
     return auto
-      ? 'Looking for a face…'
+      ? 'Waiting for a face…'
       : 'Ready — press Recognise'
   }
   return null

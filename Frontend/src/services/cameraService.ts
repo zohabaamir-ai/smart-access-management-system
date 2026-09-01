@@ -38,6 +38,9 @@ export interface Camera {
   location: string
   is_active: boolean
   status: CameraStatus
+  // Auto (true) vs Manual (false) recognition mode for this camera's
+  // public station. Camera-level, shared across devices (not local).
+  auto_recognition: boolean
   created_at: string
 }
 
@@ -50,6 +53,7 @@ export interface UpdateCameraRequest {
   name?: string
   location?: string
   is_active?: boolean
+  auto_recognition?: boolean
 }
 
 export function getCameras(): Promise<Camera[]> {

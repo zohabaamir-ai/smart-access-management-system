@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 import {
   Link,
   useNavigate,
@@ -20,7 +18,6 @@ import SectionLabel from '../../components/common/SectionLabel'
 import useToast from '../../components/common/toast/useToast'
 
 import useCameras from '../../context/cameras/useCameras'
-import { getAutoRecognition } from '../../context/cameras/cameraSessions'
 import type { Camera } from '../../services/cameraService'
 
 import useRecognitionCamera from '../../components/recognition/useRecognitionCamera'
@@ -62,9 +59,8 @@ function CameraPreview({ camera }: Props) {
   const { videoRef, cameraError, ready } =
     useRecognitionCamera({ enabled: true })
 
-  const [autoConfigured] = useState<boolean>(
-    () => getAutoRecognition(camera.slug),
-  )
+  const autoConfigured =
+    camera.auto_recognition
 
   const status = getCameraSessionStatus(
     camera,

@@ -12,11 +12,7 @@ import {
   sendCameraHeartbeat,
   RecognitionError,
 } from '../../services/recognitionService'
-import {
-  autoRecognitionKey,
-  getAutoRecognition,
-  startRecognitionSession,
-} from '../../context/cameras/cameraSessions'
+import { startRecognitionSession } from '../../context/cameras/cameraSessions'
 
 import {
   captureJpegFrame,
@@ -33,44 +29,49 @@ import type {
    usePublicRecognition
 
    The public recognition station state machine
-   (/recognition/camera/:slug). One loop drives both modes:
+   (/recognition/camera/:slug).
 
-     AUTO   (per-camera config on)  — a recognition runs every
-            RECOGNITION_INTERVAL_MS while in "scanning"
-     MANUAL (per-camera config off) — recognizeNow() runs one
+   Deliberate cadence:
 
-   Outcomes (backend contract, POST /recognition/camera/{slug}):
-     results: []                    -> no face   (NO event)
-     results: [{ matched: false }]  -> no match  (NO event)
-     results: [{ matched: true }]   -> matched   (backend logs 1 event)
-     400 "Multiple faces detected"  -> multi face (NO event)
-     400 "Invalid image file."      -> bad frame  (NO event)
-     404 disabled / decommissioned  -> unavailable (terminal)
-     422 / 5xx / network            -> request failure
+     starting
+        -> scanning ("Waiting for a face…", NO recognition calls)
+        -> a face / scene change appears
+        -> checking ("Recognizing…", scan-line animation, ONE call)
+        -> result overlay (matched / no match / …)
+        -> short cooldown (result_hold) or watching (matched)
+        -> re-baseline the quiet scene
+        -> scanning again
 
-   Repeated-recognition control:
-     After a MATCH the machine enters "watching" and issues NO
-     recognition calls. It compares a coarse frame signature to
-     the matched frame; a large scene change = the person left
-     -> resume scanning. WATCH_CAP_MS is a backstop if the scene
-     stays similar. This is a pixel-delta heuristic, NOT true
-     face-presence tracking.
+   AUTO mode does NOT poll: while "scanning" it samples only a
+   coarse 32x24 greyscale frame signature (cheap, local, no
+   inference) and fires the real recognition request only when
+   the scene changes past ENTER_DELTA vs. the quiet baseline —
+   i.e. someone stepped up. One priming call is made right after
+   the camera opens so a person already standing there is caught.
+   The same continuously-present face is not re-recognised until
+   the scene changes again.
 
-   Session presence:
-     While the camera stream is live, this hook heartbeats the
-     camera's public session to the BACKEND (authoritative,
-     cross-device ONLINE) and to localStorage (same-browser
-     fallback). Both stop when the page/stream goes away.
+   MANUAL mode: `recognizeNow()` runs exactly one flow per press;
+   it never auto-repeats.
+
+   Auto vs Manual is a camera-level backend setting
+   (cameras.auto_recognition), passed in as `auto` — the same on
+   every device that opens this camera.
+
+   Session presence (heartbeat to backend + localStorage
+   fallback) is independent of recognition activity and is not
+   changed here.
 ============================================================= */
-
-export const RECOGNITION_INTERVAL_MS = 2500
 
 // Backend camera-session TTL is 20s (CAMERA_SESSION_TTL_SECONDS);
 // beat comfortably inside it.
 const BACKEND_HEARTBEAT_MS = 8000
 
+// Minimum gap between two auto recognition attempts.
+const AUTO_MIN_GAP_MS = 2500
+
 const HOLD_MS: Record<string, number> = {
-  no_face: 700,
+  no_face: 1400,
   multi_face: 2200,
   no_match: 2800,
   error: 2500,
@@ -78,7 +79,9 @@ const HOLD_MS: Record<string, number> = {
 
 const MATCH_MIN_DISPLAY_MS = 2500
 const WATCH_CAP_MS = 45_000
-const LEFT_DELTA = 0.12
+// Coarse scene-change thresholds (normalised mean abs pixel diff).
+const LEFT_DELTA = 0.12 // matched person likely left -> resume
+const ENTER_DELTA = 0.12 // scene changed vs quiet -> someone stepped up
 const TICK_MS = 400
 
 type Options = {
@@ -86,6 +89,8 @@ type Options = {
   videoRef: RefObject<HTMLVideoElement | null>
   // camera stream is ready (video has dimensions)
   ready: boolean
+  // camera-level recognition mode (backend cameras.auto_recognition)
+  auto: boolean
   onUnavailable?: (message: string) => void
 }
 
@@ -93,6 +98,7 @@ export function usePublicRecognition({
   slug,
   videoRef,
   ready,
+  auto,
   onUnavailable,
 }: Options) {
   const canvasRef =
@@ -108,42 +114,31 @@ export function usePublicRecognition({
     useState<RecognitionOutcome>({
       kind: 'idle',
     })
-  const [auto, setAuto] = useState<boolean>(
-    () => getAutoRecognition(slug),
-  )
 
   const phaseRef = useRef(phase)
   const autoRef = useRef(auto)
-  const nextRunRef = useRef(0)
+  // earliest time the next auto attempt may fire (cooldown floor)
+  const armedAtRef = useRef(0)
   const holdUntilRef = useRef(0)
   const watchStartedRef = useRef(0)
   const watchCapAtRef = useRef(0)
   const matchSigRef =
     useRef<Uint8Array | null>(null)
+  // quiet-scene fingerprint the auto gate compares against
+  const baselineSigRef =
+    useRef<Uint8Array | null>(null)
+  // one ungated recognition right after the camera opens
+  const primedRef = useRef(false)
 
   useEffect(() => {
     autoRef.current = auto
-  }, [auto])
-
-  // keep the auto flag in sync if the management app flips it
-  // in another tab while this page is open
-  useEffect(() => {
-    const key = autoRecognitionKey(slug)
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === key) {
-        setAuto(getAutoRecognition(slug))
-      }
+    // entering Auto (on open, or a mid-session switch) re-arms the
+    // one ungated "priming" recognition so a person already in front
+    // of the camera is picked up
+    if (auto) {
+      primedRef.current = false
     }
-    window.addEventListener(
-      'storage',
-      onStorage,
-    )
-    return () =>
-      window.removeEventListener(
-        'storage',
-        onStorage,
-      )
-  }, [slug])
+  }, [auto])
 
   // heartbeat the public session while the stream is live — to the
   // backend (cross-device ONLINE) and to localStorage (same-browser
@@ -178,12 +173,27 @@ export function usePublicRecognition({
     [],
   )
 
+  // Return to the calm waiting state: snapshot the (now quiet)
+  // scene as the new baseline so a still-present person is not
+  // recognised again, and start a fresh cooldown.
+  const resumeWaiting = useCallback(
+    (cooldownMs: number) => {
+      baselineSigRef.current = frameSignature(
+        videoRef.current,
+        sigCanvasRef.current,
+      )
+      primedRef.current = true
+      armedAtRef.current =
+        Date.now() + cooldownMs
+      setPhase('scanning')
+    },
+    [setPhase, videoRef],
+  )
+
   const enterHold = useCallback(
     (kind: keyof typeof HOLD_MS) => {
-      const until =
+      holdUntilRef.current =
         Date.now() + (HOLD_MS[kind] ?? 2000)
-      holdUntilRef.current = until
-      nextRunRef.current = until
       setPhase('result_hold')
     },
     [setPhase],
@@ -294,8 +304,10 @@ export function usePublicRecognition({
     if (!ready) return
 
     if (phaseRef.current === 'starting') {
+      primedRef.current = false
+      baselineSigRef.current = null
+      armedAtRef.current = 0
       setPhase('scanning')
-      nextRunRef.current = Date.now()
     }
 
     const id = window.setInterval(() => {
@@ -312,7 +324,8 @@ export function usePublicRecognition({
 
       if (ph === 'result_hold') {
         if (now >= holdUntilRef.current) {
-          setPhase('scanning')
+          // cooldown before the auto gate can fire again
+          resumeWaiting(AUTO_MIN_GAP_MS)
         }
         return
       }
@@ -326,8 +339,7 @@ export function usePublicRecognition({
           return
         }
         if (now >= watchCapAtRef.current) {
-          setPhase('scanning')
-          nextRunRef.current = now
+          resumeWaiting(300)
           return
         }
         const sig = frameSignature(
@@ -340,23 +352,55 @@ export function usePublicRecognition({
             matchSigRef.current,
           ) >= LEFT_DELTA
         ) {
-          setPhase('scanning')
-          nextRunRef.current = now + 300
+          resumeWaiting(300)
         }
         return
       }
 
       // ph === 'scanning'
       if (!autoRef.current) return
-      if (now >= nextRunRef.current) {
-        nextRunRef.current =
-          now + RECOGNITION_INTERVAL_MS
+
+      // one ungated call right after the camera opens, so a
+      // person already in front of the camera is recognised
+      if (!primedRef.current) {
+        primedRef.current = true
+        armedAtRef.current =
+          now + AUTO_MIN_GAP_MS
+        void runOnce()
+        return
+      }
+
+      if (now < armedAtRef.current) return
+
+      const sig = frameSignature(
+        videoRef.current,
+        sigCanvasRef.current,
+      )
+      if (!baselineSigRef.current) {
+        // first quiet sample becomes the baseline
+        baselineSigRef.current = sig
+        return
+      }
+      if (
+        frameDelta(
+          sig,
+          baselineSigRef.current,
+        ) >= ENTER_DELTA
+      ) {
+        armedAtRef.current =
+          now + AUTO_MIN_GAP_MS
         void runOnce()
       }
     }, TICK_MS)
 
     return () => window.clearInterval(id)
-  }, [ready, runOnce, setPhase, videoRef])
+  }, [
+    ready,
+    runOnce,
+    resumeWaiting,
+    setPhase,
+    videoRef,
+  ])
 
   /* ---------- manual control ---------- */
 
@@ -376,14 +420,15 @@ export function usePublicRecognition({
     if (phaseRef.current === 'unavailable')
       return
     setOutcome({ kind: 'idle' })
-    nextRunRef.current = Date.now()
+    baselineSigRef.current = null
+    primedRef.current = true
+    armedAtRef.current = Date.now()
     setPhase('scanning')
   }, [setPhase])
 
   return {
     phase,
     outcome,
-    auto,
     canvasRef,
     sigCanvasRef,
     recognizeNow,

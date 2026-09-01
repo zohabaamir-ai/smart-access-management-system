@@ -17,6 +17,9 @@ class CameraResponse(BaseModel):
     location: str
     is_active: bool
     status: CameraStatus
+    # Auto (True) vs Manual (False) recognition mode for this camera's
+    # public station. Camera-level, shared across devices.
+    auto_recognition: bool
     created_at: datetime
 
 
@@ -29,3 +32,4 @@ class CameraUpdateRequest(BaseModel):
     name: str | None = None
     location: str | None = None
     is_active: bool | None = None
+    auto_recognition: bool | None = None

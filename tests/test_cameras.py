@@ -23,6 +23,7 @@ _CAMERA_RESPONSE_KEYS = {
     "location",
     "is_active",
     "status",
+    "auto_recognition",
     "created_at",
 }
 
@@ -227,6 +228,69 @@ def test_update_camera_forbidden_for_operator(client, db):
         json={"name": "Nope"},
     )
     assert response.status_code == 403
+
+
+# ---------------------------------------------------------------------------
+# auto_recognition — camera-level, cross-device recognition mode
+# ---------------------------------------------------------------------------
+
+def test_camera_defaults_to_manual_recognition(client, db):
+    make_admin(db, username="adm", role="admin")
+    make_camera(db, slug="mode-default")
+    headers = auth_headers(client, "adm")
+
+    row = client.get("/cameras", headers=headers).json()[0]
+    assert row["auto_recognition"] is False
+
+
+def test_toggle_auto_recognition_is_shared_across_devices(client, db):
+    """PATCH by management is authoritative; the unauthenticated public
+    station endpoint returns the same value — no browser-local state."""
+    make_admin(db, username="adm", role="admin")
+    camera = make_camera(db, slug="mode-share")
+    headers = auth_headers(client, "adm")
+
+    updated = client.patch(
+        f"/cameras/{camera.id}",
+        headers=headers,
+        json={"auto_recognition": True},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["auto_recognition"] is True
+
+    # a wholly separate, unauthenticated caller (another device) sees it
+    public = client.get("/cameras/slug/mode-share")
+    assert public.status_code == 200
+    assert public.json()["auto_recognition"] is True
+
+    back = client.patch(
+        f"/cameras/{camera.id}",
+        headers=headers,
+        json={"auto_recognition": False},
+    )
+    assert back.json()["auto_recognition"] is False
+    assert (
+        client.get("/cameras/slug/mode-share").json()[
+            "auto_recognition"
+        ]
+        is False
+    )
+
+
+def test_auto_recognition_only_patch_is_accepted(client, db):
+    make_admin(db, username="adm", role="admin")
+    camera = make_camera(db, slug="mode-only")
+    headers = auth_headers(client, "adm")
+
+    r = client.patch(
+        f"/cameras/{camera.id}",
+        headers=headers,
+        json={"auto_recognition": True},
+    )
+    assert r.status_code == 200
+    # unrelated fields untouched
+    assert r.json()["name"] == camera.name
+    assert r.json()["is_active"] is True
 
 
 # ---------------------------------------------------------------------------

@@ -52,6 +52,19 @@ class Camera(Base):
         nullable=False,
     )
 
+    # Camera/station-level recognition mode, shared across every device
+    # that opens the public recognition URL:
+    #   True   the station recognises deliberately on its own when a
+    #          face appears (Auto)
+    #   False  the station waits for a manual "Recognise" press (Manual)
+    # Set by management (PATCH /cameras/{id}); read by the public
+    # station (GET /cameras/slug/{slug}). Not a browser-local setting.
+    auto_recognition: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(

@@ -166,6 +166,7 @@ class CameraRepository:
         name: str | None = None,
         location: str | None = None,
         is_active: bool | None = None,
+        auto_recognition: bool | None = None,
     ) -> Camera:
 
         if name is not None:
@@ -176,6 +177,11 @@ class CameraRepository:
 
         if is_active is not None:
             camera.is_active = is_active
+
+        if auto_recognition is not None:
+            camera.auto_recognition = (
+                auto_recognition
+            )
 
         self.db.commit()
 

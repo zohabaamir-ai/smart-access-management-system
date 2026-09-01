@@ -46,10 +46,14 @@ function CameraRecognition() {
   const [unavailableMsg, setUnavailableMsg] =
     useState('')
 
+  // Auto vs Manual is a camera-level backend setting, shared
+  // across every device that opens this camera.
+  const auto =
+    camera?.auto_recognition ?? false
+
   const {
     phase,
     outcome,
-    auto,
     canvasRef,
     sigCanvasRef,
     recognizeNow,
@@ -58,6 +62,7 @@ function CameraRecognition() {
     slug,
     videoRef,
     ready: ready && !cameraError,
+    auto,
     onUnavailable: (message) =>
       setUnavailableMsg(message),
   })

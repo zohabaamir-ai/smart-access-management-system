@@ -108,12 +108,14 @@ def make_camera(
     slug: str = "front-door",
     location: str = "Lobby",
     is_active: bool = True,
+    auto_recognition: bool = False,
 ) -> Camera:
     camera = Camera(
         name=name,
         slug=slug,
         location=location,
         is_active=is_active,
+        auto_recognition=auto_recognition,
     )
     db.add(camera)
     db.commit()
